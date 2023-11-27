@@ -18,11 +18,12 @@
           buildInputs = [
             libxkbcommon
             libGL
+
             # WINIT_UNIX_BACKEND=wayland
             wayland
           ];
           LD_LIBRARY_PATH = "${lib.makeLibraryPath buildInputs}";
-          RUST_BACKTRACE="full";
+          RUST_BACKTRACE=1;
         };
       });
 }

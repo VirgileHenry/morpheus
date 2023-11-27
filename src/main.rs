@@ -9,9 +9,19 @@ fn main() {
     let event_loop = EventLoop::new().unwrap();
     let window = WindowBuilder::new().build(&event_loop).unwrap();
 
-    // ControlFlow::Poll continuously runs the event loop, even if the OS hasn't
-    // dispatched any events. This is ideal for games and similar applications.
-    event_loop.set_control_flow(ControlFlow::Poll);
+    let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
+        backends: wgpu::Backends::all(),
+        ..Default::default()
+    });
+
+    let surface = unsafe { instance.create_surface(&window) }.unwrap();
+    let adapter = pollster::block_on(instance.request_adapter(&wgpu::RequestAdapterOptions {
+        power_preference: wgpu::PowerPreference::default(),
+        compatible_surface: Some(&surface),
+        force_fallback_adapter: false,
+    }));
+
+    println!("adapter: {adapter:?}");
 
     // ControlFlow::Wait pauses the event loop if no events are available to process.
     // This is ideal for non-game applications that only update in response to user
