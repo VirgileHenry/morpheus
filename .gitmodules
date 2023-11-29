@@ -1,0 +1,3 @@
+[submodule "deps/csg"]
+	path = deps/csg
+	url = git@github.com:VirgileHenry/csg.git
