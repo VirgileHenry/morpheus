@@ -1,10 +1,12 @@
 { pkgs ? import <nixpkgs> {} }:
 
 pkgs.mkShell {
-  buildInputs = with pkgs; [
+  nativeBuildInputs = with pkgs; [
+    libxkbcommon
+    libGL
+    # WINIT_UNIX_BACKEND=wayland
     wayland
-    wayland.dev
-    dlopen
   ];
-  RUST_BACKTRACE="full";
+  LD_LIBRARY_PATH = "${pkgs.libxkbcommon}/lib:${pkgs.libGL}/lib:${pkgs.wayland}/lib";
+  RUST_BACKTRACE=1;
 }
