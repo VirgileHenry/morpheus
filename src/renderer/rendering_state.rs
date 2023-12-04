@@ -124,7 +124,6 @@ impl RenderingState {
             });
 
             render_pass.set_pipeline(&self.pipeline);
-            // todo : create the bind groups for resolution and camera.
             render_pass.set_bind_group(0, &world.main_camera().bind_group(), &[]);
             render_pass.set_bind_group(1, &self.screen_resolution.bind_group, &[]);
             render_pass.set_bind_group(2, &csg_renderer.bind_group(), &[]);

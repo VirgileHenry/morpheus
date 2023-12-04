@@ -1,10 +1,13 @@
 use crate::world::{camera::Camera, components::transform::Transform};
 
 pub(crate) mod csg_buffer;
-pub mod rendering_state;
+pub(crate) mod rendering_state;
 pub(crate) mod screen_resolution;
 pub(crate) mod shader_data;
 
+
+/// Central morpheus app renderer.
+/// This include the wgpu state, as well as the world with entities and components.
 pub struct Renderer {
     state: self::rendering_state::RenderingState,
     world: crate::world::World,
@@ -15,7 +18,7 @@ impl Renderer {
         where T: wgpu::raw_window_handle::HasRawWindowHandle + wgpu::raw_window_handle::HasRawDisplayHandle,
     {
         let state = rendering_state::RenderingState::new(handle, start_size)?;
-        let main_camera = Camera::new(&state.device, glam::vec3(0., 0., 3.));
+        let main_camera = Camera::new(&state.device, glam::vec3(0., 0., 2.0), start_size);
         let world = crate::world::World::new(main_camera);
         Ok(Renderer {
             state,
@@ -24,7 +27,8 @@ impl Renderer {
     }
 
     pub fn resize(&mut self, new_size: (u32, u32)) {
-        self.state.resize(new_size)
+        self.state.resize(new_size);
+        self.world.main_camera_mut().viewport_resize(&self.state.queue, new_size);
     }
 
     pub fn render(&self) -> Result<(), wgpu::SurfaceError> {

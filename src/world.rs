@@ -28,6 +28,10 @@ impl World {
         &self.main_camera
     }
 
+    pub fn main_camera_mut(&mut self) -> &mut Camera {
+        &mut self.main_camera
+    }
+
     pub fn add_obj(&mut self, transform: Transform, csg: csg::csg_object::Object, state: &RenderingState) {
         let renderer = CsgRenderer::new(state, csg);
         self.world.push((transform, renderer));

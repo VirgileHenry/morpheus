@@ -23,12 +23,8 @@ fn main() {
 
     renderer.create_obj(csg::csg_object::Object::Primitive(
         csg::csg_primitives::Primitive::Sphere(
-            csg::csg_primitives::sphere::CsgSphere::centered(0.3)
+            csg::csg_primitives::sphere::CsgSphere::centered(0.5)
         )
-    ));
-
-    renderer.create_obj(csg::csg_object::Object::Operation(
-        csg::csg_operations::Op::Union(csg::csg_operations::union::Union::new(vec![]))
     ));
 
     // ControlFlow::Wait pauses the event loop if no events are available to process.
