@@ -102,7 +102,7 @@ impl RenderingState {
         
         let mut query = <(&Transform, &CsgRenderer)>::query();
 
-        for (transform, csg_renderer) in query.iter(world.legion_world()) {
+        for (_transform, csg_renderer) in query.iter(world.legion_world()) {
             let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                 label: Some("Render Pass"),
                 color_attachments: &[Some(wgpu::RenderPassColorAttachment {
