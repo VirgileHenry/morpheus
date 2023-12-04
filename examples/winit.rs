@@ -9,6 +9,7 @@ pub use morpheus::*;
 fn main() {
 
     let event_loop = EventLoop::new().unwrap();
+    
     let window = WindowBuilder::new().build(&event_loop).unwrap();
     let start_size = (window.inner_size().width, window.inner_size().height);
 
@@ -19,6 +20,16 @@ fn main() {
             std::process::exit(1);
         }
     };
+
+    renderer.create_obj(csg::csg_object::Object::Primitive(
+        csg::csg_primitives::Primitive::Sphere(
+            csg::csg_primitives::sphere::CsgSphere::centered(0.3)
+        )
+    ));
+
+    renderer.create_obj(csg::csg_object::Object::Operation(
+        csg::csg_operations::Op::Union(csg::csg_operations::union::Union::new(vec![]))
+    ));
 
     // ControlFlow::Wait pauses the event loop if no events are available to process.
     // This is ideal for non-game applications that only update in response to user
@@ -35,7 +46,7 @@ fn main() {
             Event::WindowEvent {
                 event: WindowEvent::Resized(physical_size),
                 ..
-            } => renderer.state_mut().resize((physical_size.width, physical_size.height)),
+            } => renderer.resize((physical_size.width, physical_size.height)),
             Event::WindowEvent {
                 event: WindowEvent::RedrawRequested,
                 ..
