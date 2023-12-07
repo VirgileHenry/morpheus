@@ -1,2 +1,3 @@
 pub(crate) mod csg_renderer;
-pub(crate) mod transform;
+pub mod transform;
+pub mod light;

@@ -1,4 +1,4 @@
-pub(crate) mod components;
+pub mod components;
 pub(crate) mod camera;
 
 use crate::renderer::rendering_state::RenderingState;
@@ -32,7 +32,7 @@ impl World {
         &mut self.main_camera
     }
 
-    pub fn add_obj(&mut self, transform: Transform, csg: csg::csg_object::Object, state: &RenderingState) {
+    pub fn add_obj(&mut self, transform: Transform, csg: csg::object::Object, state: &RenderingState) {
         let renderer = CsgRenderer::new(state, csg);
         self.world.push((transform, renderer));
     }

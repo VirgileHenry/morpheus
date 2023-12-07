@@ -4,6 +4,7 @@ pub(crate) mod csg_buffer;
 pub(crate) mod rendering_state;
 pub(crate) mod screen_resolution;
 pub(crate) mod shader_data;
+pub(crate) mod deffered_renderer;
 
 
 /// Central morpheus app renderer.
@@ -35,7 +36,7 @@ impl Renderer {
         self.state.render(&self.world)
     }
 
-    pub fn create_obj(&mut self, csg: csg::csg_object::Object) {
+    pub fn create_obj(&mut self, csg: csg::object::Object) {
         self.world.add_obj(Transform::origin(), csg, &self.state);
     }
 }

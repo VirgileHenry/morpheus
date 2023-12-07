@@ -82,6 +82,7 @@ impl ShaderData for Camera {
 
 const CAMERA_GPU_SIZE: usize = 144; // mat4 is 64, vec4 is 16
 
+// todo ; correct the matrices depending on backend
 fn buffer_from_cam(position: glam::Vec3, view_dir: glam::Quat, fovy: f32, aspect_ratio: f32) -> [u8; CAMERA_GPU_SIZE] {
     let view_mat = glam::Mat4::from_rotation_translation(view_dir, position);
     let proj_mat = glam::Mat4::perspective_infinite_rh(fovy, aspect_ratio, 0.1);

@@ -11,6 +11,7 @@ wgpu = { path="../wgpu/wgpu" }
 csg = { path="deps/csg" }
 glam = "0.24.2"
 legion = "0.4.0"
+bytemuck = "1.14.0"
 # include_wgsl = "1.1.1"
 
 [dev-dependencies]

@@ -3,13 +3,13 @@ use crate::renderer::{csg_buffer::CsgBuffer, rendering_state::RenderingState};
 
 
 pub(crate) struct CsgRenderer {
-    _csg: csg::csg_object::Object,
+    _csg: csg::object::Object,
     _bounding_box_size: f32,
     buffer: CsgBuffer, // the buffer of csg tree like on gpu
 }
 
 impl CsgRenderer {
-    pub fn new(wgpu_state: &RenderingState, csg: csg::csg_object::Object) -> CsgRenderer {
+    pub fn new(wgpu_state: &RenderingState, csg: csg::object::Object) -> CsgRenderer {
         
         let buffer = CsgBuffer::new(wgpu_state, &csg);
 
