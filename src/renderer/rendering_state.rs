@@ -83,7 +83,7 @@ impl RenderingState {
         }
     }
 
-    pub fn render(&self, world: &crate::world::World) -> Result<(), wgpu::SurfaceError> {
+    pub fn render(&self, world: &mut crate::world::World) -> Result<(), wgpu::SurfaceError> {
         self.renderer.render(world, &self.device, &self.queue, &self.surface)
     }
 

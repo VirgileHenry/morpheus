@@ -32,8 +32,12 @@ impl Renderer {
         self.world.main_camera_mut().viewport_resize(&self.state.queue, new_size);
     }
 
-    pub fn render(&self) -> Result<(), wgpu::SurfaceError> {
-        self.state.render(&self.world)
+    pub fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
+        // check world rebuild
+        if self.world.is_dirty() {
+            self.world.rebuild(&self.state.device, &self.state.queue);
+        }
+        self.state.render(&mut self.world)
     }
 
     pub fn create_obj(&mut self, csg: csg::object::Object) {

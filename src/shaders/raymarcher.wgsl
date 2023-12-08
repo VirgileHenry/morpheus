@@ -53,7 +53,7 @@ var<uniform> screen_resolution: ScreenResolution;
 
 struct CsgObject {
     csg_id: u32,
-    data: array<f32, 7>, // hand made union thingy
+    data: array<f32, 11>, // hand made union thingy
 }
 
 struct Ray {
@@ -102,7 +102,6 @@ fn fs_main(@builtin(position) in: vec4<f32>) -> GBufferOut {
     let ray: Ray = get_ray(screen_pos);
 
     var out: GBufferOut;
-    var stack: array<u32, 20>;
 
     // todo : advance ray towards first box encounter
     // todo : stop condition: out of the box
@@ -128,13 +127,12 @@ fn fs_main(@builtin(position) in: vec4<f32>) -> GBufferOut {
 }
 
 fn scene_sdf(at: vec3<f32>) -> f32 {
-    // we are going to use a stack with reversed polish notations
+    // the csg tree is written in reverse polish notation (suffixed)
+    // use a stack to compute the sdf
     var stack_ptr: u32 = 0u;
-    var sdf_stack: array<f32, 10>;
+    // hard coded stack size
+    var sdf_stack: array<f32, 8>;
 
-    // the csg nodes are written in a prefixed manner,
-    // and our stack based approach need a suffix one.
-    // so iterate in reverse
     for(var i: u32 = 0u; i < csg_object_count; i++) {
 
         switch csg_objects[i].csg_id {
@@ -145,7 +143,9 @@ fn scene_sdf(at: vec3<f32>) -> f32 {
             }
 
             case 4u: { // id 4 is min, from the two values on the stack
-                sdf_stack[stack_ptr - 2u] = min(sdf_stack[stack_ptr - 2u], sdf_stack[stack_ptr - 1u]);
+                let sdf1: f32 = sdf_stack[stack_ptr - 2u];
+                let sdf2: f32 = sdf_stack[stack_ptr - 1u];
+                sdf_stack[stack_ptr - 2u] = min(sdf1, sdf2);
                 stack_ptr -= 1u; // pop 2 push 1
             }
 
@@ -157,6 +157,7 @@ fn scene_sdf(at: vec3<f32>) -> f32 {
     return sdf_stack[stack_ptr - 1u];
 }
 
+
 fn scene_normal(at: vec3<f32>) -> vec3<f32> {
     // mmmh, not a fan of calculating the sdf 4 times
     // another solution is to come across exact normal for every sdf node,
@@ -164,7 +165,9 @@ fn scene_normal(at: vec3<f32>) -> vec3<f32> {
 
     // this comes from inigo quilez articles, and he said he does it 
     // https://iquilezles.org/articles/normalsSDF/
-    let h: f32 = 0.0001; // replace by an appropriate value
+    
+    // small enough for graphic precision, yet big enough to avoid noise artifacts
+    let h: f32 = 0.00001;
     let k: vec2<f32> = vec2(1.0, -1.0);
     return normalize( k.xyy * scene_sdf( at + k.xyy * h ) + 
                       k.yyx * scene_sdf( at + k.yyx * h ) + 
@@ -178,14 +181,21 @@ fn scene_normal(at: vec3<f32>) -> vec3<f32> {
 
 fn sphere_sdf(at: vec3<f32>, csg_index: u32) -> f32 {
     // we are reading this primitive, so increase the index
-    let data: array<f32, 7> = csg_objects[csg_index].data;
+    let data: array<f32, 11> = csg_objects[csg_index].data;
     let offset: vec3<f32> = vec3(data[0], data[1], data[2]);
     let radius = data[3];
     return length(offset - at) - radius;
 }
 
 fn sphere_normal(at: vec3<f32>, csg_index: u32) -> vec3<f32> {
-    let data: array<f32, 7> = csg_objects[csg_index].data;
+    let data: array<f32, 11> = csg_objects[csg_index].data;
     let center: vec3<f32> = vec3(data[0], data[1], data[2]);
     return normalize(at - center);
+}
+
+
+// utils
+fn smin(a: f32, b: f32, k: f32) -> f32 {
+    let h: f32 = clamp(0.5 + 0.5*(a-b)/k, 0.0, 1.0);
+    return mix(a, b, h) - k*h*(1.0-h);
 }

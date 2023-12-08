@@ -1,6 +1,8 @@
 pub mod components;
 pub(crate) mod camera;
 
+use legion::IntoQuery;
+
 use crate::renderer::rendering_state::RenderingState;
 
 use self::{camera::Camera, components::{transform::Transform, csg_renderer::CsgRenderer}};
@@ -10,6 +12,7 @@ use self::{camera::Camera, components::{transform::Transform, csg_renderer::CsgR
 pub struct World {
     world: legion::World,
     main_camera: Camera,
+    dirty: bool, // needs rebuild on some components
 }
 
 impl World {
@@ -17,11 +20,16 @@ impl World {
         World {
             world: legion::World::default(),
             main_camera,
+            dirty: false,
         }
     }
 
     pub fn legion_world(&self) -> &legion::World {
         &self.world
+    }
+
+    pub fn legion_world_mut(&mut self) -> &mut legion::World {
+        &mut self.world
     }
 
     pub fn main_camera(&self) -> &Camera {
@@ -35,6 +43,20 @@ impl World {
     pub fn add_obj(&mut self, transform: Transform, csg: csg::object::Object, state: &RenderingState) {
         let renderer = CsgRenderer::new(state, csg);
         self.world.push((transform, renderer));
+    }
+
+    pub(crate) fn is_dirty(&self) -> bool {
+        self.dirty
+    }
+
+    pub(crate) fn rebuild(&mut self, device: &wgpu::Device, queue: &wgpu::Queue) {
+        let mut query = <&mut CsgRenderer as IntoQuery>::query();
+        for csg_renderer in query.iter_mut(&mut self.world) {
+            if csg_renderer.is_dirty() {
+                csg_renderer.update_csg_buffer(device, queue);
+            }
+        }
+        self.dirty = false;
     }
     
 }
