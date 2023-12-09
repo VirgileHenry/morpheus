@@ -3,6 +3,11 @@ use wgpu::util::DeviceExt;
 use super::shader_data::HasBindGroupLayout;
 
 /// trait for any types we need to put into a buffer.
+/// This provides info on how we are going to bind that type in the buffer.
+/// It can feel weird to be strict on where types are bound in the gpu,
+/// but in the context of building a renderer (and not an abstraction for renderers)
+/// when I'm creating my types for buffers I create them for specific bindings.
+/// This is what is abstracted here. But I guess this abstraction is discutable ?
 pub(crate) trait BufferElem : bytemuck::Pod {
     const VISIBILITY: wgpu::ShaderStages;
     const BINDING: u32;
