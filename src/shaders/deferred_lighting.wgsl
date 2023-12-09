@@ -46,7 +46,7 @@ fn fs_main(@builtin(position) in: vec4<f32>) -> @location(0) vec4<f32> {
 
     let ambiant = vec3(0.01, 0.01, 0.03);
     let sun = vec3(0.98, 0.95, 0.93);
-    let sun_dir = normalize(vec3(-0.3, 1.0, -0.4));
+    let sun_dir = normalize(vec3(-0.3, -1.0, -0.4));
 
     let normal_depth = textureLoad(gbuff_normal_depth_t, uv, 0);
     let color = textureLoad(gbuff_albedo_t, uv, 0).xyz;

@@ -87,20 +87,21 @@ fn buffer_from_cam(position: glam::Vec3, view_dir: glam::Quat, fovy: f32, aspect
     let view_mat = glam::Mat4::from_rotation_translation(view_dir, position);
     let proj_mat = glam::Mat4::perspective_infinite_rh(fovy, aspect_ratio, 0.1);
     let view_proj = proj_mat * view_mat.inverse();
+    let ray_mat = glam::Mat4::from_rotation_translation(view_dir, glam::Vec3::ZERO);
     let mut buffer = [0u8; CAMERA_GPU_SIZE];
-    let cam_pos = position.extend(1.0);
+    let pos_fovy = position.extend(fovy);
 
     for (i, value) in view_proj.as_ref().into_iter().enumerate() {
         for (j, byte) in value.to_ne_bytes().into_iter().enumerate() {
             buffer[std::mem::size_of::<f32>() * i + j] = byte;
         }
     }
-    for (i, value) in view_mat.as_ref().into_iter().enumerate() {
+    for (i, value) in ray_mat.as_ref().into_iter().enumerate() {
         for (j, byte) in value.to_ne_bytes().into_iter().enumerate() {
             buffer[std::mem::size_of::<glam::Mat4>() + std::mem::size_of::<f32>() * i + j] = byte;
         }
     }
-    for (i, value) in cam_pos.as_ref().into_iter().enumerate() {
+    for (i, value) in pos_fovy.as_ref().into_iter().enumerate() {
         for (j, byte) in value.to_ne_bytes().into_iter().enumerate() {
             buffer[2 * std::mem::size_of::<glam::Mat4>() + std::mem::size_of::<f32>() * i + j] = byte;
         }

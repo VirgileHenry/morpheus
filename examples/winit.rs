@@ -24,13 +24,13 @@ fn main() {
     renderer.create_obj(csg::object::Object::Operation(
         csg::operations::Op::Union(csg::operations::union::Union::new(vec![
             csg::object::Object::Primitive(
-                csg::primitives::Primitive::Sphere(
-                    csg::primitives::sphere::Sphere::centered(0.3)
+                csg::primitives::Primitive::Cube(
+                    csg::primitives::cube::Cube::origin().scaled(glam::vec3(0.4, 0.2, 0.4)).at(glam::vec3(0.0, -0.2, 0.0))
                 )
             ),
             csg::object::Object::Primitive(
                 csg::primitives::Primitive::Sphere(
-                    csg::primitives::sphere::Sphere::centered(0.2).at(glam::vec3(0., -0.4, 0.))
+                    csg::primitives::sphere::Sphere::centered(0.3).at(glam::vec3(0.0, 0.2, 0.0))
                 )
             ),
         ]))

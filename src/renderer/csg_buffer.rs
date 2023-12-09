@@ -169,6 +169,23 @@ fn to_gpu_data(node: csg::node::Node) -> [u8; CSG_NODE_GPU_SIZE] {
                 result[4 + i] = byte;
             }
         }
+        csg::node::Node::PrimitiveCube { position, rotation, scale } => {
+            let bytes = [
+                position.x.to_ne_bytes(),
+                position.y.to_ne_bytes(),
+                position.z.to_ne_bytes(),
+                rotation.x.to_ne_bytes(),
+                rotation.y.to_ne_bytes(),
+                rotation.z.to_ne_bytes(),
+                rotation.w.to_ne_bytes(),
+                scale.x.to_ne_bytes(),
+                scale.y.to_ne_bytes(),
+                scale.z.to_ne_bytes(),
+            ];
+            for (i, byte) in bytes.into_iter().flatten().enumerate() {
+                result[4 + i] = byte;
+            }
+        }
         
         _ => { /* no data to pass */ }
     }

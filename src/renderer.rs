@@ -19,7 +19,7 @@ impl Renderer {
         where T: wgpu::raw_window_handle::HasRawWindowHandle + wgpu::raw_window_handle::HasRawDisplayHandle,
     {
         let state = rendering_state::RenderingState::new(handle, start_size)?;
-        let main_camera = Camera::new(&state.device, glam::vec3(0., 0., 2.0), start_size);
+        let main_camera = Camera::new(&state.device, glam::vec3(0., 0.4, 2.0), start_size);
         let world = crate::world::World::new(main_camera);
         Ok(Renderer {
             state,
