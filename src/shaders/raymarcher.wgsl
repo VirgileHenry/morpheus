@@ -108,9 +108,13 @@ fn fs_main(@builtin(position) in: vec4<f32>) -> GBufferOut {
     // todo : advance ray towards first box encounter
     // todo : stop condition: out of the box
 
-
-    let max_iter = 250;
-    let hit_eps = 0.00001;
+    // the hard number over the max numbers of iterations.
+    // the more the better quality (avoid ome artifacts when we struggle to hit the csg)
+    // but also the more expensive it gets.
+    let max_iter = 200;
+    // how close to the surface we need to be in order to hit.
+    // the less the better quality, but the more expensive.
+    let hit_eps = 0.0001;
     var eval_point: vec3<f32> = ray.origin;
     for(var i = 0; i < max_iter; i++) {
         let scene_sdf = scene_sdf(eval_point);
@@ -135,7 +139,8 @@ fn scene_sdf(at: vec3<f32>) -> f32 {
     // the csg tree is written in reverse polish notation (suffixed)
     // use a stack to compute the sdf
     var stack_ptr: u32 = 0u;
-    // hard coded stack size
+    // hard coded stack size. defines the height of the biggest tree we can compute.
+    // the more the better, but the more expensive it gets.
     var sdf_stack: array<f32, 5>;
 
     for(var i: u32 = 0u; i < csg_object_count; i++) {
@@ -154,7 +159,7 @@ fn scene_sdf(at: vec3<f32>) -> f32 {
             case 22u: { // id 22 is union (min), from the two values on the stack
                 let sdf1: f32 = sdf_stack[stack_ptr - 2u];
                 let sdf2: f32 = sdf_stack[stack_ptr - 1u];
-                sdf_stack[stack_ptr - 2u] = min(sdf1, sdf2);
+                sdf_stack[stack_ptr - 2u] = smin(sdf1, sdf2, 0.15);
                 stack_ptr -= 1u; // pop 2 push 1
             }
 

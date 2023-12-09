@@ -11,8 +11,8 @@ wgpu = { path="../wgpu/wgpu" }
 csg = { path="deps/csg" }
 glam = "0.24.2"
 legion = "0.4.0"
-bytemuck = "1.14.0"
+bytemuck = { version="1.14.0", features=["min_const_generics"] }
 # include_wgsl = "1.1.1"
 
 [dev-dependencies]
-winit = { version = "0.29.4", features = ["rwh_05"] }
+winit = { version="0.29.4", features=["rwh_05"] }

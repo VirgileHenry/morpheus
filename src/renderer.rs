@@ -1,10 +1,11 @@
 use crate::world::{camera::Camera, components::transform::Transform};
 
 pub(crate) mod csg_buffer;
+pub(crate) mod buffer;
 pub(crate) mod rendering_state;
 pub(crate) mod screen_resolution;
 pub(crate) mod shader_data;
-pub(crate) mod deffered_renderer;
+pub(crate) mod deferred_renderer;
 
 
 /// Central morpheus app renderer.

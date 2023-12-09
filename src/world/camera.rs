@@ -1,13 +1,10 @@
-use wgpu::util::DeviceExt;
-
-use crate::renderer::shader_data::ShaderData;
+use crate::renderer::buffer::{BufferElem, Buffer};
 
 pub struct Camera {
     position: glam::Vec3,
     view_dir: glam::Quat,
     fovy: f32,
-    buffer: wgpu::Buffer,
-    bind_group: wgpu::BindGroup,
+    buffer: Buffer<CameraToGpu, false>,
 }
 
 impl Camera {
@@ -17,95 +14,73 @@ impl Camera {
         let fovy = 1.5;
 
         let aspect_ratio = if viewport_size.1 > 0 { viewport_size.0 as f32 / viewport_size.1 as f32 } else { 1.0 };
-        let buffer_content = buffer_from_cam(position, view_dir, fovy, aspect_ratio);
 
-        let buffer_init = wgpu::util::BufferInitDescriptor {
-            label: Some("CSG Object data buffer"),
-            contents: &buffer_content,
-            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
-        };
-        
-        let buffer = device.create_buffer_init(&buffer_init);
-
-        let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-            layout: &Self::bind_group_layout(device),
-            entries: &[
-                wgpu::BindGroupEntry {
-                    binding: 0,
-                    resource: buffer.as_entire_binding(),
-                }
-            ],
-            label: Some("camera bind group"),
-        });
+        let cam_to_gpu = CameraToGpu::new(view_dir, position, aspect_ratio, fovy);
+        let buffer = Buffer::<CameraToGpu, false>::new(device, cam_to_gpu);
 
         Camera {
             position,
             view_dir,
             fovy,
             buffer,
-            bind_group,
         }
 
     }
 
     pub fn viewport_resize(&mut self, queue: &wgpu::Queue, new_size: (u32, u32)) {
         let aspect_ratio = if new_size.1 > 0 { new_size.0 as f32 / new_size.1 as f32 } else { 1.0 };
-        let buffer = buffer_from_cam(self.position, self.view_dir, self.fovy, aspect_ratio);
 
-        queue.write_buffer(&self.buffer, 0, &buffer);
+        let cam_to_gpu = CameraToGpu::new(self.view_dir, self.position, aspect_ratio, self.fovy);
+        self.buffer.update(queue, cam_to_gpu);
     }
 
     pub fn bind_group(&self) -> &wgpu::BindGroup {
-        &self.bind_group
+        self.buffer.bind_group()
     }
 }
 
-impl ShaderData for Camera {
-    fn bind_group_layout(device: &wgpu::Device) -> wgpu::BindGroupLayout {
-        device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-            entries: &[
-                wgpu::BindGroupLayoutEntry {
-                    binding: 0,
-                    visibility: wgpu::ShaderStages::VERTEX_FRAGMENT,
-                    ty: wgpu::BindingType::Buffer {
-                        ty: wgpu::BufferBindingType::Uniform,
-                        has_dynamic_offset: false,
-                        min_binding_size: None,
-                    },
-                    count: None,
-                }
-            ],
-            label: Some("camera bind group layout"),
-        })
-    }
+/// data that is sent to the gpu
+#[repr(C)]
+#[derive(Debug, Clone, Copy)]
+pub(crate) struct CameraToGpu {
+    proj_view: glam::Mat4,
+    ray_mat: glam::Mat4,
+    position: glam::Vec3,
+    fovy: f32,
 }
 
 const CAMERA_GPU_SIZE: usize = 144; // mat4 is 64, vec4 is 16
 
-// todo ; correct the matrices depending on backend
-fn buffer_from_cam(position: glam::Vec3, view_dir: glam::Quat, fovy: f32, aspect_ratio: f32) -> [u8; CAMERA_GPU_SIZE] {
-    let view_mat = glam::Mat4::from_rotation_translation(view_dir, position);
-    let proj_mat = glam::Mat4::perspective_infinite_rh(fovy, aspect_ratio, 0.1);
-    let view_proj = proj_mat * view_mat.inverse();
-    let ray_mat = glam::Mat4::from_rotation_translation(view_dir, glam::Vec3::ZERO);
-    let mut buffer = [0u8; CAMERA_GPU_SIZE];
-    let pos_fovy = position.extend(fovy);
+unsafe impl bytemuck::Zeroable for CameraToGpu {}
+unsafe impl bytemuck::Pod for CameraToGpu {}
 
-    for (i, value) in view_proj.as_ref().into_iter().enumerate() {
-        for (j, byte) in value.to_ne_bytes().into_iter().enumerate() {
-            buffer[std::mem::size_of::<f32>() * i + j] = byte;
-        }
+impl BufferElem for CameraToGpu {
+    const BINDING: u32 = 0;
+    const BINDING_TYPE: wgpu::BindingType = wgpu::BindingType::Buffer {
+        ty: wgpu::BufferBindingType::Uniform,
+        has_dynamic_offset: false,
+        min_binding_size: None,
+    };
+    const LABEL: &'static str = "camera";
+    const VISIBILITY: wgpu::ShaderStages = wgpu::ShaderStages::VERTEX_FRAGMENT;
+    fn to_bytes(&self) -> &[u8] {
+        bytemuck::cast_ref::<CameraToGpu, [u8; CAMERA_GPU_SIZE]>(&self)
     }
-    for (i, value) in ray_mat.as_ref().into_iter().enumerate() {
-        for (j, byte) in value.to_ne_bytes().into_iter().enumerate() {
-            buffer[std::mem::size_of::<glam::Mat4>() + std::mem::size_of::<f32>() * i + j] = byte;
-        }
-    }
-    for (i, value) in pos_fovy.as_ref().into_iter().enumerate() {
-        for (j, byte) in value.to_ne_bytes().into_iter().enumerate() {
-            buffer[2 * std::mem::size_of::<glam::Mat4>() + std::mem::size_of::<f32>() * i + j] = byte;
-        }
-    }
+}
 
-    buffer
+impl CameraToGpu {
+    pub(crate) fn new(view_dir: glam::Quat, position: glam::Vec3, aspect_ratio: f32, fovy: f32) -> CameraToGpu {
+        
+        let view_mat = glam::Mat4::from_rotation_translation(view_dir, position);
+        let proj_mat = glam::Mat4::perspective_infinite_rh(fovy, aspect_ratio, 0.1);
+        let proj_view = proj_mat * view_mat.inverse();
+        let ray_mat = glam::Mat4::from_rotation_translation(view_dir, glam::Vec3::ZERO);
+
+        CameraToGpu { 
+            proj_view,
+            ray_mat,
+            position,
+            fovy
+        }
+    }
 }

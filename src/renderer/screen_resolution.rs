@@ -1,4 +1,4 @@
-use super::shader_data::ShaderData;
+use super::shader_data::HasBindGroupLayout;
 use wgpu::util::DeviceExt;
 
 pub struct ScreenResolution {
@@ -41,7 +41,7 @@ impl ScreenResolution {
     }
 }
 
-impl ShaderData for ScreenResolution {
+impl HasBindGroupLayout for ScreenResolution {
     fn bind_group_layout(device: &wgpu::Device) -> wgpu::BindGroupLayout {
         device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
             entries: &[

@@ -1,4 +1,4 @@
-use super::deffered_renderer::DefferedRenderer;
+use super::deferred_renderer::DeferredRenderer;
 
 
 /// WGPU stuff. Includes unsafe references to the created surface,
@@ -12,7 +12,7 @@ pub struct RenderingState {
     pub(crate) queue: wgpu::Queue,
     pub(crate) config: wgpu::SurfaceConfiguration,
     pub(crate) size: (u32, u32),
-    pub(crate) renderer: DefferedRenderer,
+    pub(crate) renderer: DeferredRenderer,
 }
 
 impl RenderingState {
@@ -61,7 +61,7 @@ impl RenderingState {
 
         surface.configure(&device, &config);
 
-        let renderer = DefferedRenderer::new(&device, &config);
+        let renderer = DeferredRenderer::new(&device, &config);
 
         Ok(RenderingState {
             surface,

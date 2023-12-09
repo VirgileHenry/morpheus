@@ -1,29 +1,33 @@
 mod texture;
+mod textures;
 // mod storage_buffer;
 
 use legion::IntoQuery;
+use self::textures::{AlbedoTexture, NormalDepthTexture};
+
+use super::buffer::Buffer;
 use super::{
     screen_resolution::ScreenResolution,
     csg_buffer::CsgBuffer
 };
-use crate::world::camera::Camera;
-use crate::renderer::shader_data::ShaderData;
+use crate::world::camera::CameraToGpu;
+use crate::renderer::shader_data::HasBindGroupLayout;
 use crate::world::components::csg_renderer::CsgRenderer;
 use crate::world::components::transform::Transform;
 
 
 
 /// A deffered renderer.
-pub(crate) struct DefferedRenderer {
+pub(crate) struct DeferredRenderer {
     first_stage_pipeline: wgpu::RenderPipeline,
     second_stage_pipeline: wgpu::RenderPipeline,
     screen_resolution: ScreenResolution,
-    albedo_tex: self::texture::Texture,
-    normal_depth_tex: self::texture::Texture,
+    albedo_tex: self::texture::Texture<AlbedoTexture>,
+    normal_depth_tex: self::texture::Texture<NormalDepthTexture>,
 }
 
-impl DefferedRenderer {
-    pub(crate) fn new(device: &wgpu::Device, config: &wgpu::SurfaceConfiguration) -> DefferedRenderer {
+impl DeferredRenderer {
+    pub(crate) fn new(device: &wgpu::Device, config: &wgpu::SurfaceConfiguration) -> DeferredRenderer {
         let first_stage_pipeline = create_first_stage_pipeline(device);
         let second_stage_pipeline = create_second_stage_pipeline(device, config);
         let screen_resolution = ScreenResolution::new(&device, (config.width, config.height));
@@ -33,15 +37,13 @@ impl DefferedRenderer {
         let albedo_tex = self::texture::Texture::new(
             device, size,
             wgpu::TextureFormat::Rgba8UnormSrgb,
-            self::texture::albedo_bind_group_layout(device)
         );
         let normal_depth_tex = self::texture::Texture::new(
             device, size,
             wgpu::TextureFormat::Rgba16Float,
-            self::texture::normal_depth_bind_group_layout(device)
         );
 
-        DefferedRenderer { 
+        DeferredRenderer { 
             first_stage_pipeline,
             second_stage_pipeline,
             screen_resolution,
@@ -153,7 +155,7 @@ fn create_first_stage_pipeline(device: &wgpu::Device) -> wgpu::RenderPipeline {
     let render_pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
         label: Some("first stage pipeline layout"),
         bind_group_layouts: &[
-            &Camera::bind_group_layout(device),
+            &Buffer::<CameraToGpu, false>::bind_group_layout(device),
             &ScreenResolution::bind_group_layout(device),
             &CsgBuffer::bind_group_layout(device),
         ],
@@ -219,8 +221,8 @@ fn create_second_stage_pipeline(device: &wgpu::Device, config: &wgpu::SurfaceCon
         label: Some("second stage pipeline layout"),
         bind_group_layouts: &[
             &ScreenResolution::bind_group_layout(device),
-            &self::texture::albedo_bind_group_layout(device),
-            &self::texture::normal_depth_bind_group_layout(device),
+            &self::texture::Texture::<AlbedoTexture>::bind_group_layout(device),
+            &self::texture::Texture::<NormalDepthTexture>::bind_group_layout(device),
         ],
         push_constant_ranges: &[],
     });
