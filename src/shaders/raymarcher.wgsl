@@ -159,7 +159,7 @@ fn scene_sdf(at: vec3<f32>) -> f32 {
             case 22u: { // id 22 is union (min), from the two values on the stack
                 let sdf1: f32 = sdf_stack[stack_ptr - 2u];
                 let sdf2: f32 = sdf_stack[stack_ptr - 1u];
-                sdf_stack[stack_ptr - 2u] = smin(sdf1, sdf2, 0.15);
+                sdf_stack[stack_ptr - 2u] = min(sdf1, sdf2);
                 stack_ptr -= 1u; // pop 2 push 1
             }
 

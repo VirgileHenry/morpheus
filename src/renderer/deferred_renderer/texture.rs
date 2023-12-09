@@ -1,4 +1,4 @@
-use crate::renderer::shader_data::HasBindGroupLayout;
+use crate::renderer::has_bind_group_layout::HasBindGroupLayout;
 
 
 /// trait that provides informations about any textures

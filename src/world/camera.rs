@@ -49,6 +49,7 @@ pub(crate) struct CameraToGpu {
     fovy: f32,
 }
 
+// when stabilized, std::mem::size_of::<CameraToGpu>()
 const CAMERA_GPU_SIZE: usize = 144; // mat4 is 64, vec4 is 16
 
 unsafe impl bytemuck::Zeroable for CameraToGpu {}

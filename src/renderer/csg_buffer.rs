@@ -7,7 +7,7 @@ use csg::traits::tree_height::TreeHeight;
 use wgpu::util::DeviceExt;
 
 use super::rendering_state::RenderingState;
-use super::shader_data::HasBindGroupLayout;
+use super::has_bind_group_layout::HasBindGroupLayout;
 
 /// WGPU buffer that contains a csg object.
 pub(crate) struct CsgBuffer {

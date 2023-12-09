@@ -1,6 +1,6 @@
 use wgpu::util::DeviceExt;
 
-use super::shader_data::HasBindGroupLayout;
+use super::has_bind_group_layout::HasBindGroupLayout;
 
 /// trait for any types we need to put into a buffer.
 /// This provides info on how we are going to bind that type in the buffer.

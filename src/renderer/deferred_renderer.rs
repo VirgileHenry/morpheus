@@ -11,7 +11,7 @@ use super::{
     csg_buffer::CsgBuffer
 };
 use crate::world::camera::CameraToGpu;
-use crate::renderer::shader_data::HasBindGroupLayout;
+use crate::renderer::has_bind_group_layout::HasBindGroupLayout;
 use crate::world::components::csg_renderer::CsgRenderer;
 use crate::world::components::transform::Transform;
 
@@ -21,7 +21,7 @@ use crate::world::components::transform::Transform;
 pub(crate) struct DeferredRenderer {
     first_stage_pipeline: wgpu::RenderPipeline,
     second_stage_pipeline: wgpu::RenderPipeline,
-    screen_resolution: ScreenResolution,
+    screen_resolution: Buffer<ScreenResolution, false>,
     albedo_tex: self::texture::Texture<AlbedoTexture>,
     normal_depth_tex: self::texture::Texture<NormalDepthTexture>,
 }
@@ -30,7 +30,7 @@ impl DeferredRenderer {
     pub(crate) fn new(device: &wgpu::Device, config: &wgpu::SurfaceConfiguration) -> DeferredRenderer {
         let first_stage_pipeline = create_first_stage_pipeline(device);
         let second_stage_pipeline = create_second_stage_pipeline(device, config);
-        let screen_resolution = ScreenResolution::new(&device, (config.width, config.height));
+        let screen_resolution = Buffer::<ScreenResolution, false>::new(&device, ScreenResolution::new(config.width, config.height));
 
         let size = (config.width, config.height);
         
@@ -53,7 +53,7 @@ impl DeferredRenderer {
     }
 
     pub(crate) fn resize(&mut self, device: &wgpu::Device, queue: &wgpu::Queue, new_size: (u32, u32)) {
-        self.screen_resolution.resize(queue, new_size);
+        self.screen_resolution.update(queue, ScreenResolution::new(new_size.0, new_size.1));
         // resize all temps textures
         self.albedo_tex.resize(device, new_size);
         self.normal_depth_tex.resize(device, new_size);
@@ -103,7 +103,7 @@ impl DeferredRenderer {
 
         first_stage_render_pass.set_pipeline(&self.first_stage_pipeline);
         first_stage_render_pass.set_bind_group(0, &world.main_camera().bind_group(), &[]);
-        first_stage_render_pass.set_bind_group(1, &self.screen_resolution.bind_group, &[]);
+        first_stage_render_pass.set_bind_group(1, &self.screen_resolution.bind_group(), &[]);
 
         let mut query = <(&Transform, &CsgRenderer)>::query();
         for (_transform, csg_renderer) in query.iter(world.legion_world()) {
@@ -133,7 +133,7 @@ impl DeferredRenderer {
 
         // second stage
         second_stage_render_pass.set_pipeline(&self.second_stage_pipeline);
-        second_stage_render_pass.set_bind_group(0, &self.screen_resolution.bind_group, &[]);
+        second_stage_render_pass.set_bind_group(0, &self.screen_resolution.bind_group(), &[]);
         second_stage_render_pass.set_bind_group(1, self.albedo_tex.bind_group(), &[]);
         second_stage_render_pass.set_bind_group(2, self.normal_depth_tex.bind_group(), &[]);
         // draw the hard coded quad
@@ -156,7 +156,7 @@ fn create_first_stage_pipeline(device: &wgpu::Device) -> wgpu::RenderPipeline {
         label: Some("first stage pipeline layout"),
         bind_group_layouts: &[
             &Buffer::<CameraToGpu, false>::bind_group_layout(device),
-            &ScreenResolution::bind_group_layout(device),
+            &Buffer::<ScreenResolution, false>::bind_group_layout(device),
             &CsgBuffer::bind_group_layout(device),
         ],
         push_constant_ranges: &[],
@@ -220,7 +220,7 @@ fn create_second_stage_pipeline(device: &wgpu::Device, config: &wgpu::SurfaceCon
     let render_pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
         label: Some("second stage pipeline layout"),
         bind_group_layouts: &[
-            &ScreenResolution::bind_group_layout(device),
+            &Buffer::<ScreenResolution, false>::bind_group_layout(device),
             &self::texture::Texture::<AlbedoTexture>::bind_group_layout(device),
             &self::texture::Texture::<NormalDepthTexture>::bind_group_layout(device),
         ],
