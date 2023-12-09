@@ -35,23 +35,37 @@ pub(crate) struct Buffer<T: BufferElem, const TYPE_ARRAY: bool> {
 impl<T: BufferElem> Buffer<T, false> {
     pub(crate) fn new(device: &wgpu::Device, t: T) -> Buffer<T, false> {
 
+        #[cfg(debug_assertions)]
+        let label = format!("{:?} buffer init descriptor", T::LABEL);
+        #[cfg(debug_assertions)]
+        let label = Some(label.as_str());
+        #[cfg(not(debug_assertions))]
+        let label = Some("buffer init descriptor");
+
         let buffer_init = wgpu::util::BufferInitDescriptor {
-            label: Some("CSG Object data buffer"),
+            label,
             contents: t.to_bytes(),
             usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
         };
         
         let buffer = device.create_buffer_init(&buffer_init);
 
+        #[cfg(debug_assertions)]
+        let label = format!("{:?} bind group", T::LABEL);
+        #[cfg(debug_assertions)]
+        let label = Some(label.as_str());
+        #[cfg(not(debug_assertions))]
+        let label = Some("bind group");
+
         let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
             layout: &Self::bind_group_layout(device),
             entries: &[
                 wgpu::BindGroupEntry {
-                    binding: 0,
+                    binding: T::BINDING,
                     resource: buffer.as_entire_binding(),
                 }
             ],
-            label: Some("camera bind group"),
+            label,
         });
 
         Buffer { 
