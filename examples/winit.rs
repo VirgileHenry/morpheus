@@ -1,3 +1,4 @@
+use morpheus::world::components::transform::Transform;
 use winit::{
     event::{Event, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
@@ -21,20 +22,23 @@ fn main() {
         }
     };
 
-    renderer.create_obj(csg::object::Object::Operation(
-        csg::operations::Op::Union(csg::operations::union::Union::new(vec![
-            csg::object::Object::Primitive(
-                csg::primitives::Primitive::Cube(
-                    csg::primitives::cube::Cube::origin().scaled(glam::vec3(0.4, 0.2, 0.4)).at(glam::vec3(0.0, -0.2, 0.0))
-                )
-            ),
-            csg::object::Object::Primitive(
-                csg::primitives::Primitive::Sphere(
-                    csg::primitives::sphere::Sphere::centered(0.3).at(glam::vec3(0.0, 0.2, 0.0))
-                )
-            ),
-        ]))
-    ));
+    renderer.create_obj(
+        Transform::origin().rotated(glam::Quat::from_axis_angle(glam::Vec3::Y, 0.3)),
+        csg::object::Object::Operation(
+            csg::operations::Op::Union(csg::operations::union::Union::new(vec![
+                csg::object::Object::Primitive(
+                    csg::primitives::Primitive::Cube(
+                        csg::primitives::cube::Cube::origin().scaled(glam::vec3(0.4, 0.2, 0.4)).at(glam::vec3(0.0, -0.2, 0.0))
+                    )
+                ),
+                csg::object::Object::Primitive(
+                    csg::primitives::Primitive::Sphere(
+                        csg::primitives::sphere::Sphere::centered(0.3).at(glam::vec3(0.0, 0.2, 0.0))
+                    )
+                ),
+            ]))
+        )
+    );
 
     // ControlFlow::Wait pauses the event loop if no events are available to process.
     // This is ideal for non-game applications that only update in response to user

@@ -13,12 +13,13 @@ use super::{
 use crate::world::camera::CameraToGpu;
 use crate::renderer::has_bind_group_layout::HasBindGroupLayout;
 use crate::world::components::csg_renderer::CsgRenderer;
-use crate::world::components::transform::Transform;
+use crate::world::components::transform::{Transform, TransformToGpu};
 
 
 
 /// A deffered renderer.
 pub(crate) struct DeferredRenderer {
+    transform_buffer: Buffer<TransformToGpu, true>,
     first_stage_pipeline: wgpu::RenderPipeline,
     second_stage_pipeline: wgpu::RenderPipeline,
     screen_resolution: Buffer<ScreenResolution, false>,
@@ -43,7 +44,10 @@ impl DeferredRenderer {
             wgpu::TextureFormat::Rgba16Float,
         );
 
-        DeferredRenderer { 
+        let transform_buffer = Buffer::<TransformToGpu, true>::empty(device);
+
+        DeferredRenderer {
+            transform_buffer,
             first_stage_pipeline,
             second_stage_pipeline,
             screen_resolution,
@@ -57,6 +61,16 @@ impl DeferredRenderer {
         // resize all temps textures
         self.albedo_tex.resize(device, new_size);
         self.normal_depth_tex.resize(device, new_size);
+    }
+
+    pub(crate) fn update_uniforms(&mut self, world: &mut crate::world::World, queue: &wgpu::Queue) {
+        let mut query = <(&mut Transform, &CsgRenderer)>::query();
+        for (i, (transform, _csg_renderer)) in query.iter_mut(world.legion_world_mut()).enumerate() {
+            if transform.is_dirty() {
+                self.transform_buffer.update_elem(queue, i as u64, transform.recompute_matrix());
+                transform.set_clean();
+            }
+        }
     }
 
     pub(crate) fn render(&self, world: &crate::world::World, device: &wgpu::Device, queue: &wgpu::Queue, surface: &wgpu::Surface) -> Result<(), wgpu::SurfaceError> {
@@ -106,8 +120,9 @@ impl DeferredRenderer {
         first_stage_render_pass.set_bind_group(1, &self.screen_resolution.bind_group(), &[]);
 
         let mut query = <(&Transform, &CsgRenderer)>::query();
-        for (_transform, csg_renderer) in query.iter(world.legion_world()) {
+        for (i, (_transform, csg_renderer)) in query.iter(world.legion_world()).enumerate() {
             first_stage_render_pass.set_bind_group(2, &csg_renderer.bind_group(), &[]);
+            first_stage_render_pass.set_bind_group(3, self.transform_buffer.bind_group(), &[i as u32]);
             // draw the hard coded bounding box
             first_stage_render_pass.draw(0..36, 0..1);
         }
@@ -158,6 +173,7 @@ fn create_first_stage_pipeline(device: &wgpu::Device) -> wgpu::RenderPipeline {
             &Buffer::<CameraToGpu, false>::bind_group_layout(device),
             &Buffer::<ScreenResolution, false>::bind_group_layout(device),
             &CsgBuffer::bind_group_layout(device),
+            &Buffer::<TransformToGpu, false>::bind_group_layout(device),
         ],
         push_constant_ranges: &[],
     });

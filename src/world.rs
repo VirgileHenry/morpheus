@@ -24,23 +24,23 @@ impl World {
         }
     }
 
-    pub fn legion_world(&self) -> &legion::World {
+    pub(crate) fn legion_world(&self) -> &legion::World {
         &self.world
     }
 
-    pub fn legion_world_mut(&mut self) -> &mut legion::World {
+    pub(crate) fn legion_world_mut(&mut self) -> &mut legion::World {
         &mut self.world
     }
 
-    pub fn main_camera(&self) -> &Camera {
+    pub(crate) fn main_camera(&self) -> &Camera {
         &self.main_camera
     }
 
-    pub fn main_camera_mut(&mut self) -> &mut Camera {
+    pub(crate) fn main_camera_mut(&mut self) -> &mut Camera {
         &mut self.main_camera
     }
 
-    pub fn add_obj(&mut self, transform: Transform, csg: csg::object::Object, state: &RenderingState) {
+    pub(crate) fn add_obj(&mut self, transform: Transform, csg: csg::object::Object, state: &RenderingState) {
         let renderer = CsgRenderer::new(state, csg);
         self.world.push((transform, renderer));
     }

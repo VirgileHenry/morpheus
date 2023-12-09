@@ -2,13 +2,21 @@
 
 struct Camera {
     proj_view: mat4x4<f32>,
-    ray_mat: mat4x4<f32>,
+    inv_rot: mat4x4<f32>,
     position: vec3<f32>,
     fovy: f32,
 }
 
 @group(0) @binding(0)
 var<uniform> camera: Camera;
+
+struct ModelTransform {
+    transform: mat4x4<f32>,
+    inverse_tf: mat4x4<f32>,
+}
+
+@group(3) @binding(0)
+var<uniform> model: ModelTransform;
 
 
 @vertex
@@ -38,7 +46,7 @@ fn vs_main(@builtin(vertex_index) in_vertex_index: u32) -> @builtin(position) ve
         vec4<f32>(-0.5, -0.5, -0.5, 1.0), vec4<f32>(0.5, -0.5, 0.5, 1.0), vec4<f32>(-0.5, -0.5, 0.5, 1.0)
     );
 
-    return camera.proj_view * positions[in_vertex_index];
+    return camera.proj_view * model.transform * positions[in_vertex_index];
 }
 
 // frag shader
@@ -74,9 +82,9 @@ var<uniform> csg_object_count: u32;
 
 /// noramalized_frag_pos should be between -1 and 1
 fn get_ray(noramalized_frag_pos: vec2<f32>) -> Ray {
-    let cam_right = (vec4(1.0, 0.0, 0.0, 1.0) * camera.ray_mat).xyz;
-    let cam_up = (vec4(0.0, 1.0, 0.0, 1.0) * camera.ray_mat).xyz;
-    let cam_forward = (vec4(0.0, 0.0, -1.0, 1.0) * camera.ray_mat).xyz;
+    let cam_right = (vec4(1.0, 0.0, 0.0, 1.0) * camera.inv_rot).xyz;
+    let cam_up = (vec4(0.0, 1.0, 0.0, 1.0) * camera.inv_rot).xyz;
+    let cam_forward = (vec4(0.0, 0.0, -1.0, 1.0) * camera.inv_rot).xyz;
 
     let aspect_ratio = f32(screen_resolution.width) / f32(screen_resolution.height);
 
@@ -86,11 +94,14 @@ fn get_ray(noramalized_frag_pos: vec2<f32>) -> Ray {
     let x = noramalized_frag_pos.x * tan_cam_fovx_halfed;
     let y = noramalized_frag_pos.y * tan_cam_fovy_halfed;
 
-    let ray_direction = normalize(cam_forward + cam_right * x + cam_up * y);
+    // ray direction should be transformed, ignoring position (so mat3x3 will ignore position transformations)
+    let inverse_model_rot = mat3x3(model.inverse_tf[0].xyz, model.inverse_tf[1].xyz, model.inverse_tf[2].xyz);
+    let ray_direction = inverse_model_rot * normalize(cam_forward + cam_right * x + cam_up * y);
 
-    // todo: also convert the space with model mat 
+    // ray position should be transformed along with the object position
+    let ray_position = (model.inverse_tf * vec4(camera.position, 1.0)).xyz;
 
-    return Ray(camera.position, ray_direction);
+    return Ray(ray_position, ray_direction);
 }
 
 @fragment
@@ -128,7 +139,7 @@ fn fs_main(@builtin(position) in: vec4<f32>) -> GBufferOut {
         eval_point += ray.dir * scene_sdf;
     }
 
-    // if(true) { return GBufferOut(vec4(1.0, 0.0 ,0.0, 1.0), vec4(1.0)); }
+    if(true) { return GBufferOut(vec4(1.0, 0.0 ,0.0, 1.0), vec4(1.0)); }
 
     // infinity, discard
     discard;
@@ -183,10 +194,16 @@ fn scene_normal(at: vec3<f32>) -> vec3<f32> {
     // small enough for graphic precision, yet big enough to avoid noise artifacts
     let h: f32 = 0.00001;
     let k: vec2<f32> = vec2(1.0, -1.0);
-    return normalize( k.xyy * scene_sdf( at + k.xyy * h ) + 
-                      k.yyx * scene_sdf( at + k.yyx * h ) + 
-                      k.yxy * scene_sdf( at + k.yxy * h ) + 
-                      k.xxx * scene_sdf( at + k.xxx * h ) );
+    let normal: vec3<f32> = normalize( k.xyy * scene_sdf( at + k.xyy * h ) + 
+                                       k.yyx * scene_sdf( at + k.yyx * h ) + 
+                                       k.yxy * scene_sdf( at + k.yxy * h ) + 
+                                       k.xxx * scene_sdf( at + k.xxx * h ) );
+    
+    // the normal is in cam view space, put it back in world space?
+    let model_rot = mat3x3(model.transform[0].xyz, model.transform[1].xyz, model.transform[2].xyz);
+    let cam_rot = mat3x3(camera.inv_rot[0].xyz, camera.inv_rot[1].xyz, camera.inv_rot[2].xyz);
+    let world_normal = model_rot * cam_rot * normal;
+    return world_normal;
 }
 
 

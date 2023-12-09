@@ -6,7 +6,7 @@ use super::deferred_renderer::DeferredRenderer;
 /// I would like to involve a lifetime in there, but then I have more issues in examples.
 /// I'll figure it out later.
 /// Maybe a Renderer generic over the surface, and provide a way to get it back when needed?
-pub struct RenderingState {
+pub(crate) struct RenderingState {
     pub(crate) surface: wgpu::Surface,
     pub(crate) device: wgpu::Device,
     pub(crate) queue: wgpu::Queue,
@@ -16,7 +16,7 @@ pub struct RenderingState {
 }
 
 impl RenderingState {
-    pub fn new<T>(handle: &T, start_size: (u32, u32)) -> Result<RenderingState, crate::error::MorpheusError>
+    pub(crate) fn new<T>(handle: &T, start_size: (u32, u32)) -> Result<RenderingState, crate::error::MorpheusError>
         where T: wgpu::raw_window_handle::HasRawWindowHandle + wgpu::raw_window_handle::HasRawDisplayHandle,
     {
         let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
@@ -73,7 +73,7 @@ impl RenderingState {
         })
     }
 
-    pub fn resize(&mut self, new_size: (u32, u32)) {
+    pub(crate) fn resize(&mut self, new_size: (u32, u32)) {
         if new_size.0 > 0 && new_size.1 > 0 {
             self.renderer.resize(&self.device, &self.queue, new_size);
             self.size = new_size;
@@ -83,7 +83,11 @@ impl RenderingState {
         }
     }
 
-    pub fn render(&self, world: &mut crate::world::World) -> Result<(), wgpu::SurfaceError> {
+    pub(crate) fn update_uniforms(&mut self, world: &mut crate::world::World) {
+        self.renderer.update_uniforms(world, &self.queue)
+    }
+
+    pub(crate) fn render(&self, world: &crate::world::World) -> Result<(), wgpu::SurfaceError> {
         self.renderer.render(world, &self.device, &self.queue, &self.surface)
     }
 

@@ -34,6 +34,7 @@ impl Renderer {
     }
 
     pub fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
+        self.state.update_uniforms(&mut self.world);
         // check world rebuild
         if self.world.is_dirty() {
             self.world.rebuild(&self.state.device, &self.state.queue);
@@ -41,7 +42,7 @@ impl Renderer {
         self.state.render(&mut self.world)
     }
 
-    pub fn create_obj(&mut self, csg: csg::object::Object) {
-        self.world.add_obj(Transform::origin(), csg, &self.state);
+    pub fn create_obj(&mut self, transform: Transform, csg: csg::object::Object) {
+        self.world.add_obj(transform, csg, &self.state);
     }
 }

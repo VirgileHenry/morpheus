@@ -12,6 +12,7 @@ pub(crate) trait BufferElem : bytemuck::Pod {
     const VISIBILITY: wgpu::ShaderStages;
     const BINDING: u32;
     const BINDING_TYPE: wgpu::BindingType;
+    const SIZE: u64;
     #[cfg(debug_assertions)]
     const LABEL: &'static str;
     fn to_bytes(&self) -> &[u8];
@@ -27,7 +28,7 @@ pub(crate) trait BufferElem : bytemuck::Pod {
 pub(crate) struct Buffer<T: BufferElem, const TYPE_ARRAY: bool> {
     marker: std::marker::PhantomData<T>,
     #[allow(unused)]
-    buffer_size: usize, // not used if !TYPE_ARRAY
+    buffer_size: u64, // not used if !TYPE_ARRAY
     buffer: wgpu::Buffer,
     bind_group: wgpu::BindGroup,
 }
@@ -80,6 +81,60 @@ impl<T: BufferElem> Buffer<T, false> {
         queue.write_buffer(&self.buffer, 0, t.to_bytes())
     }
 }
+
+
+impl<T: BufferElem> Buffer<T, true> {
+    pub(crate) fn empty(device: &wgpu::Device) -> Buffer<T, true> {
+
+        #[cfg(debug_assertions)]
+        let label = format!("{:?} buffer init descriptor", T::LABEL);
+        #[cfg(debug_assertions)]
+        let label = Some(label.as_str());
+        #[cfg(not(debug_assertions))]
+        let label = Some("buffer init descriptor");
+
+        let start_size = 16 * T::SIZE; // what is an optimal value ?
+
+        let buffer_desc = wgpu::BufferDescriptor {
+            label,
+            size: start_size,
+            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+            mapped_at_creation: false,
+        };
+
+        let buffer = device.create_buffer(&buffer_desc);
+
+        #[cfg(debug_assertions)]
+        let label = format!("{:?} bind group", T::LABEL);
+        #[cfg(debug_assertions)]
+        let label = Some(label.as_str());
+        #[cfg(not(debug_assertions))]
+        let label = Some("bind group");
+
+        let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+            layout: &Self::bind_group_layout(device),
+            entries: &[
+                wgpu::BindGroupEntry {
+                    binding: T::BINDING,
+                    resource: buffer.as_entire_binding(),
+                }
+            ],
+            label,
+        });
+
+        Buffer { 
+            marker: Default::default(),
+            buffer_size: start_size,
+            buffer,
+            bind_group,
+        }
+    }
+
+    pub(crate) fn update_elem(&mut self, queue: &wgpu::Queue, at: u64, t: T) {
+        queue.write_buffer(&self.buffer, at * T::SIZE, t.to_bytes())
+    }
+}
+
 
 impl<T: BufferElem, const TYPE_ARRAY: bool> Buffer<T, TYPE_ARRAY> {
     pub(crate) fn bind_group(&self) -> &wgpu::BindGroup {

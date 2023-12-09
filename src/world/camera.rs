@@ -10,7 +10,7 @@ pub struct Camera {
 impl Camera {
     pub fn new(device: &wgpu::Device, at: glam::Vec3, viewport_size: (u32, u32)) -> Camera {
         let position = at;
-        let view_dir = glam::Quat::IDENTITY;
+        let view_dir = glam::Quat::from_axis_angle(glam::Vec3::X, -0.3);
         let fovy = 1.5;
 
         let aspect_ratio = if viewport_size.1 > 0 { viewport_size.0 as f32 / viewport_size.1 as f32 } else { 1.0 };
@@ -44,13 +44,12 @@ impl Camera {
 #[derive(Debug, Clone, Copy)]
 pub(crate) struct CameraToGpu {
     proj_view: glam::Mat4,
-    ray_mat: glam::Mat4,
+    inv_rot: glam::Mat4,
     position: glam::Vec3,
     fovy: f32,
 }
 
-// when stabilized, std::mem::size_of::<CameraToGpu>()
-const CAMERA_GPU_SIZE: usize = 144; // mat4 is 64, vec4 is 16
+const CAMERA_GPU_SIZE: usize = std::mem::size_of::<CameraToGpu>();
 
 unsafe impl bytemuck::Zeroable for CameraToGpu {}
 unsafe impl bytemuck::Pod for CameraToGpu {}
@@ -64,6 +63,7 @@ impl BufferElem for CameraToGpu {
     };
     const LABEL: &'static str = "camera";
     const VISIBILITY: wgpu::ShaderStages = wgpu::ShaderStages::VERTEX_FRAGMENT;
+    const SIZE: u64 = CAMERA_GPU_SIZE as u64;
     fn to_bytes(&self) -> &[u8] {
         bytemuck::cast_ref::<CameraToGpu, [u8; CAMERA_GPU_SIZE]>(&self)
     }
@@ -75,11 +75,11 @@ impl CameraToGpu {
         let view_mat = glam::Mat4::from_rotation_translation(view_dir, position);
         let proj_mat = glam::Mat4::perspective_infinite_rh(fovy, aspect_ratio, 0.1);
         let proj_view = proj_mat * view_mat.inverse();
-        let ray_mat = glam::Mat4::from_rotation_translation(view_dir, glam::Vec3::ZERO);
+        let inv_rot = glam::Mat4::from_rotation_translation(view_dir.inverse(), glam::Vec3::ZERO);
 
         CameraToGpu { 
             proj_view,
-            ray_mat,
+            inv_rot,
             position,
             fovy
         }

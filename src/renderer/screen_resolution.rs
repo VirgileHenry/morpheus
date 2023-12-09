@@ -11,7 +11,7 @@ pub struct ScreenResolution {
 unsafe impl bytemuck::Zeroable for ScreenResolution {}
 unsafe impl bytemuck::Pod for ScreenResolution {}
 
-const SREEN_RESOLUTION_SIZE: usize = 8;
+const SCREEN_RESOLUTION_SIZE: usize = std::mem::size_of::<ScreenResolution>();
 
 impl BufferElem for ScreenResolution {
     const BINDING: u32 = 0;
@@ -22,8 +22,9 @@ impl BufferElem for ScreenResolution {
     };
     const LABEL: &'static str = "screen resolution";
     const VISIBILITY: wgpu::ShaderStages = wgpu::ShaderStages::FRAGMENT;
+    const SIZE: u64 = SCREEN_RESOLUTION_SIZE as u64;
     fn to_bytes(&self) -> &[u8] {
-        bytemuck::cast_ref::<ScreenResolution, [u8; SREEN_RESOLUTION_SIZE]>(&self)
+        bytemuck::cast_ref::<ScreenResolution, [u8; SCREEN_RESOLUTION_SIZE]>(&self)
     }
 }
 
