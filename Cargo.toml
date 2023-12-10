@@ -7,7 +7,8 @@ edition = "2021"
 
 [dependencies]
 pollster = "0.3.0"
-wgpu = { path="../wgpu/wgpu" }
+# modified version to expose the has raw display handle traits
+wgpu = { path="deps/wgpu/wgpu" }
 csg = { path="deps/csg" }
 glam = "0.24.2"
 legion = "0.4.0"

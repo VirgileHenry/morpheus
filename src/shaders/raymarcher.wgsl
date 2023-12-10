@@ -60,7 +60,7 @@ struct ScreenResolution {
 @group(1) @binding(0)
 var<uniform> screen_resolution: ScreenResolution;
 
-struct CsgObject {
+struct CsgNode {
     csg_id: u32,
     data: array<f32, 11>, // hand made union thingy
 }
@@ -76,7 +76,7 @@ struct GBufferOut {
 }
 
 @group(2) @binding(0)
-var<storage> csg_objects: array<CsgObject>;
+var<storage> csg_objects: array<CsgNode>;
 @group(2) @binding(1)
 var<uniform> csg_object_count: u32;
 
@@ -139,7 +139,7 @@ fn fs_main(@builtin(position) in: vec4<f32>) -> GBufferOut {
         eval_point += ray.dir * scene_sdf;
     }
 
-    if(true) { return GBufferOut(vec4(1.0, 0.0 ,0.0, 1.0), vec4(1.0)); }
+    // if(true) { return GBufferOut(vec4(1.0, 0.0 ,0.0, 1.0), vec4(1.0)); }
 
     // infinity, discard
     discard;
@@ -216,12 +216,6 @@ fn sphere_sdf(at: vec3<f32>, csg_index: u32) -> f32 {
     let offset: vec3<f32> = vec3(data[0], data[1], data[2]);
     let radius = data[3];
     return length(offset - at) - radius;
-}
-
-fn sphere_normal(at: vec3<f32>, csg_index: u32) -> vec3<f32> {
-    let data: array<f32, 11> = csg_objects[csg_index].data;
-    let center: vec3<f32> = vec3(data[0], data[1], data[2]);
-    return normalize(at - center);
 }
 
 fn cube_sdf(at: vec3<f32>, csg_index: u32) -> f32 {
