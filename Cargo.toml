@@ -8,11 +8,12 @@ edition = "2021"
 [dependencies]
 pollster = "0.3.0"
 # modified version to expose the has raw display handle traits
-wgpu = { path="deps/wgpu/wgpu" }
+wgpu = "0.18.0"
 csg = { path="deps/csg" }
 glam = "0.24.2"
 legion = "0.4.0"
 bytemuck = { version="1.14.0", features=["min_const_generics"] }
+raw-window-handle = "0.5.0"
 # include_wgsl = "1.1.1"
 
 [dev-dependencies]

@@ -17,7 +17,7 @@ pub struct Renderer {
 
 impl Renderer {
     pub fn new<T>(handle: &T, start_size: (u32, u32)) -> Result<Renderer, crate::error::MorpheusError>
-        where T: wgpu::raw_window_handle::HasRawWindowHandle + wgpu::raw_window_handle::HasRawDisplayHandle,
+        where T: raw_window_handle::HasRawWindowHandle + raw_window_handle::HasRawDisplayHandle,
     {
         let state = rendering_state::RenderingState::new(handle, start_size)?;
         let main_camera = Camera::new(&state.device, glam::vec3(0., 0.4, 2.0), start_size);

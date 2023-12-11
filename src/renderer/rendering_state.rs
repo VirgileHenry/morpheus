@@ -17,7 +17,7 @@ pub(crate) struct RenderingState {
 
 impl RenderingState {
     pub(crate) fn new<T>(handle: &T, start_size: (u32, u32)) -> Result<RenderingState, crate::error::MorpheusError>
-        where T: wgpu::raw_window_handle::HasRawWindowHandle + wgpu::raw_window_handle::HasRawDisplayHandle,
+        where T: raw_window_handle::HasRawWindowHandle + raw_window_handle::HasRawDisplayHandle,
     {
         let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
             backends: wgpu::Backends::GL, // any other does not work yet for me :( 
