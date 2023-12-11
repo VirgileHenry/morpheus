@@ -1,6 +1,3 @@
 [submodule "deps/csg"]
 	path = deps/csg
 	url = https://github.com/VirgileHenry/csg.git
-[submodule "deps/wgpu"]
-	path = deps/wgpu
-	url = git@github.com:VirgileHenry/wgpu.git
