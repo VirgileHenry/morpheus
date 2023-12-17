@@ -61,6 +61,7 @@ impl BufferElem for CameraToGpu {
         has_dynamic_offset: false,
         min_binding_size: None,
     };
+    #[cfg(debug_assertions)]
     const LABEL: &'static str = "camera";
     const VISIBILITY: wgpu::ShaderStages = wgpu::ShaderStages::VERTEX_FRAGMENT;
     const SIZE: u64 = CAMERA_GPU_SIZE as u64;

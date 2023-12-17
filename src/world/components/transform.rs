@@ -1,8 +1,5 @@
 use crate::renderer::buffer::BufferElem;
 
-
-
-
 pub struct Transform {
     position: glam::Vec3,
     rotation: glam::Quat,
@@ -77,6 +74,7 @@ impl BufferElem for TransformToGpu {
         has_dynamic_offset: true,
         min_binding_size: None,
     };
+    #[cfg(debug_assertions)]
     const LABEL: &'static str = "transform";
     const VISIBILITY: wgpu::ShaderStages = wgpu::ShaderStages::VERTEX_FRAGMENT;
     const SIZE: u64 = TRANSFORM_SIZE as u64;

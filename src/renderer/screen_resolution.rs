@@ -20,6 +20,7 @@ impl BufferElem for ScreenResolution {
         has_dynamic_offset: false,
         min_binding_size: None,
     };
+    #[cfg(debug_assertions)]
     const LABEL: &'static str = "screen resolution";
     const VISIBILITY: wgpu::ShaderStages = wgpu::ShaderStages::FRAGMENT;
     const SIZE: u64 = SCREEN_RESOLUTION_SIZE as u64;
