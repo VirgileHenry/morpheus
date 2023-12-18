@@ -6,8 +6,8 @@ use csg::traits::tree_size::TreeSize;
 use csg::traits::tree_height::TreeHeight;
 use wgpu::util::DeviceExt;
 
-use super::rendering_state::RenderingState;
-use super::has_bind_group_layout::HasBindGroupLayout;
+use crate::renderer::has_bind_group_layout::HasBindGroupLayout;
+
 
 /// WGPU buffer that contains a csg object.
 pub(crate) struct CsgBuffer {
@@ -19,7 +19,7 @@ pub(crate) struct CsgBuffer {
 
 impl CsgBuffer {
 
-    pub(crate) fn new(wgpu_state: &RenderingState, csg: &csg::object::Object) -> CsgBuffer {
+    pub(crate) fn new(device: &wgpu::Device, csg: &csg::object::Object) -> CsgBuffer {
         // create the data for the csg object
         let (csg_buffer_content, _sdf_stack_size, csg_full_size) = match csg.clone().binarize() {
             Some(binarized) => {
@@ -49,11 +49,11 @@ impl CsgBuffer {
             usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
         };
 
-        let buffer = wgpu_state.device.create_buffer_init(&buffer_init);
-        let size_buffer = wgpu_state.device.create_buffer_init(&size_buffer_init);
+        let buffer = device.create_buffer_init(&buffer_init);
+        let size_buffer = device.create_buffer_init(&size_buffer_init);
 
-        let bind_group = wgpu_state.device.create_bind_group(&wgpu::BindGroupDescriptor {
-            layout: &Self::bind_group_layout(&wgpu_state.device),
+        let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+            layout: &Self::bind_group_layout(&device),
             entries: &[
                 wgpu::BindGroupEntry {
                     binding: 0,

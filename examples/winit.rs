@@ -15,15 +15,15 @@ fn main() {
     let start_size = (window.inner_size().width, window.inner_size().height);
 
     let mut renderer = match renderer::Renderer::new(&window, start_size) {
-        Ok(window) => window,
+        Ok(renderer) => renderer,
         Err(e) => {
             println!("Unable to create renderer: {e:?}");
             std::process::exit(1);
         }
     };
 
-    renderer.create_obj(
-        Transform::origin().rotated(glam::Quat::from_axis_angle(glam::Vec3::Y, 0.3)),
+    renderer.load_csg(
+        0,
         csg::object::Object::Operation(
             csg::operations::Op::Union(csg::operations::union::Union::new(vec![
                 csg::object::Object::Primitive(
@@ -39,6 +39,7 @@ fn main() {
             ]))
         )
     );
+    renderer.create_obj(Transform::origin().rotated(glam::Quat::from_axis_angle(glam::Vec3::Y, 0.3)), 0);
 
     // ControlFlow::Wait pauses the event loop if no events are available to process.
     // This is ideal for non-game applications that only update in response to user

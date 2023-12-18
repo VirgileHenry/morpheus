@@ -5,11 +5,11 @@ mod textures;
 use legion::IntoQuery;
 use self::textures::{AlbedoTexture, NormalDepthTexture};
 
+use super::asset_manager::AssetManager;
+use super::assets::csg::CsgObjectAsset;
+use super::assets::csg::csg_buffer::CsgBuffer;
 use super::buffer::Buffer;
-use super::{
-    screen_resolution::ScreenResolution,
-    csg_buffer::CsgBuffer
-};
+use super::screen_resolution::ScreenResolution;
 use crate::world::camera::CameraToGpu;
 use crate::renderer::has_bind_group_layout::HasBindGroupLayout;
 use crate::world::components::csg_renderer::CsgRenderer;
@@ -73,7 +73,7 @@ impl DeferredRenderer {
         }
     }
 
-    pub(crate) fn render(&self, world: &crate::world::World, device: &wgpu::Device, queue: &wgpu::Queue, surface: &wgpu::Surface) -> Result<(), wgpu::SurfaceError> {
+    pub(crate) fn render(&self, world: &crate::world::World, assets: &AssetManager, device: &wgpu::Device, queue: &wgpu::Queue, surface: &wgpu::Surface) -> Result<(), wgpu::SurfaceError> {
         let output = surface.get_current_texture()?;
 
         let output_view = output.texture.create_view(&wgpu::TextureViewDescriptor::default());
@@ -121,7 +121,17 @@ impl DeferredRenderer {
 
         let mut query = <(&Transform, &CsgRenderer)>::query();
         for (i, (_transform, csg_renderer)) in query.iter(world.legion_world()).enumerate() {
-            first_stage_render_pass.set_bind_group(2, &csg_renderer.bind_group(), &[]);
+            
+            // todo: instance rendering by asset
+            let csg = match assets.get::<CsgObjectAsset>(csg_renderer.asset_id()) {
+                Some(csg) => csg,
+                None => {
+                    println!("Asset not loaded: unable to render !");
+                    continue;
+                }
+            };
+            
+            first_stage_render_pass.set_bind_group(2, &csg.bind_group(), &[]);
             first_stage_render_pass.set_bind_group(3, self.transform_buffer.bind_group(), &[i as u32]);
             // draw the hard coded bounding box
             first_stage_render_pass.draw(0..36, 0..1);

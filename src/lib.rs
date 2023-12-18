@@ -1,3 +1,5 @@
+#![feature(downcast_unchecked)]
+
 pub mod renderer;
 pub mod error;
 pub mod world;

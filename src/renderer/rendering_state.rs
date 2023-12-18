@@ -1,4 +1,4 @@
-use super::deferred_renderer::DeferredRenderer;
+use super::{deferred_renderer::DeferredRenderer, asset_manager::AssetManager};
 
 
 /// WGPU stuff. Includes unsafe references to the created surface,
@@ -87,8 +87,8 @@ impl RenderingState {
         self.renderer.update_uniforms(world, &self.queue)
     }
 
-    pub(crate) fn render(&self, world: &crate::world::World) -> Result<(), wgpu::SurfaceError> {
-        self.renderer.render(world, &self.device, &self.queue, &self.surface)
+    pub(crate) fn render(&self, world: &crate::world::World, assets: &AssetManager) -> Result<(), wgpu::SurfaceError> {
+        self.renderer.render(world, assets, &self.device, &self.queue, &self.surface)
     }
 
 }

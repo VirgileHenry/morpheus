@@ -1,17 +1,21 @@
 use crate::world::{camera::Camera, components::transform::Transform};
 
-pub(crate) mod csg_buffer;
+use self::{asset_manager::AssetManager, assets::csg::CsgObjectAsset};
+
+pub(crate) mod assets;
+pub(crate) mod asset_manager;
 pub(crate) mod buffer;
+pub(crate) mod deferred_renderer;
+pub(crate) mod has_bind_group_layout;
 pub(crate) mod rendering_state;
 pub(crate) mod screen_resolution;
-pub(crate) mod has_bind_group_layout;
-pub(crate) mod deferred_renderer;
 
 
 /// Central morpheus app renderer.
 /// This include the wgpu state, as well as the world with entities and components.
 pub struct Renderer {
     state: self::rendering_state::RenderingState,
+    assets: AssetManager,
     world: crate::world::World,
 }
 
@@ -22,8 +26,12 @@ impl Renderer {
         let state = rendering_state::RenderingState::new(handle, start_size)?;
         let main_camera = Camera::new(&state.device, glam::vec3(0., 0.4, 2.0), start_size);
         let world = crate::world::World::new(main_camera);
+
+        let assets = AssetManager::new();
+
         Ok(Renderer {
             state,
+            assets,
             world,
         })
     }
@@ -36,13 +44,18 @@ impl Renderer {
     pub fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
         self.state.update_uniforms(&mut self.world);
         // check world rebuild
-        if self.world.is_dirty() {
-            self.world.rebuild(&self.state.device, &self.state.queue);
+        if self.assets.dirty() {
+            self.assets.reload(&self.state.device, &self.state.queue);
         }
-        self.state.render(&mut self.world)
+        self.state.render(&mut self.world, &self.assets)
     }
 
-    pub fn create_obj(&mut self, transform: Transform, csg: csg::object::Object) {
-        self.world.add_obj(transform, csg, &self.state);
+    pub fn load_csg(&mut self, asset_id: u64, csg: csg::object::Object) {
+        let asset = CsgObjectAsset::new(&self.state.device, csg);
+        self.assets.load(asset_id, asset);
+    }
+
+    pub fn create_obj(&mut self, transform: Transform, asset_id: u64) {
+        self.world.add_obj(transform, asset_id);
     }
 }
