@@ -30,8 +30,7 @@ impl AssetManager {
         match self.assets.get_mut(&std::any::TypeId::of::<AssetMap<T>>()) {
             Some(map) => {
                 // SAFETY: safe because of our guarantee that the value at type id T is T
-                let map_as_any = map.as_mut() as &mut dyn std::any::Any;
-                let map = unsafe { map_as_any.downcast_mut_unchecked::<AssetMap<T>>() };
+                let map = map.as_any_mut().downcast_mut::<AssetMap<T>>().unwrap();
                 map.dirty = true;
                 map.dirty_map.insert(key, asset)
             },
@@ -50,8 +49,7 @@ impl AssetManager {
     {
         let map = self.assets.get(&std::any::TypeId::of::<AssetMap<T>>())?;
         // SAFETY: safe because of our guarantee that the value at type id T is T
-        let map_as_any = map.as_ref() as &dyn std::any::Any;
-        let map = unsafe { map_as_any.downcast_ref_unchecked::<AssetMap<T>>() };
+        let map = map.as_any().downcast_ref::<AssetMap<T>>().unwrap();
         map.map.get(&key)
     }
 

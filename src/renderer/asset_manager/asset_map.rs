@@ -28,6 +28,8 @@ impl<T> AssetMap<T> where AssetMap<T>: AssetMapTrait {
 pub trait AssetMapTrait: std::any::Any {
     fn dirty(&self) -> bool;
     fn reload(&mut self, device: &wgpu::Device, queue: &wgpu::Queue);
+    fn as_any(&self) -> &dyn std::any::Any;
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any;
 }
 
 impl<T: 'static + AssetTrait> AssetMapTrait for AssetMap<T> {
@@ -42,5 +44,9 @@ impl<T: 'static + AssetTrait> AssetMapTrait for AssetMap<T> {
             self.map.insert(key, value);
         }
     }
+
+    fn as_any(&self) -> &dyn std::any::Any { self }
+
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any { self }
 }
 
