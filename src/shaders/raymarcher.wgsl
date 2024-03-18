@@ -152,22 +152,21 @@ fn scene_sdf(at: vec3<f32>) -> f32 {
     var stack_ptr: u32 = 0u;
     // hard coded stack size. defines the height of the biggest tree we can compute.
     // the more the better, but the more expensive it gets.
-    var sdf_stack: array<f32, 5>;
+    var sdf_stack: array<f32, 8>;
 
     for(var i: u32 = 0u; i < csg_object_count; i++) {
 
         switch csg_objects[i].csg_id {
-            case 0u: { return 1.0 / 0.0; } // 0 is empty object, return inf
-            case 1u: { // id 1 is sphere, push it on the stack
+            case 0u: { // id 0 is sphere, push it on the stack
                 sdf_stack[stack_ptr] = sphere_sdf(at, i);
                 stack_ptr += 1u;
             }
-            case 2u: { // id 2 is cube, push it on the stack
+            case 1u: { // id 1 is cube, push it on the stack
                 sdf_stack[stack_ptr] = cube_sdf(at, i);
                 stack_ptr += 1u;
             }
 
-            case 22u: { // id 22 is union (min), from the two values on the stack
+            case 3u: { // id 3 is union (min), from the two values on the stack
                 let sdf1: f32 = sdf_stack[stack_ptr - 2u];
                 let sdf2: f32 = sdf_stack[stack_ptr - 1u];
                 sdf_stack[stack_ptr - 2u] = min(sdf1, sdf2);

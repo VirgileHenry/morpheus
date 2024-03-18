@@ -50,7 +50,7 @@ impl Renderer {
         self.state.render(&mut self.world, &self.assets)
     }
 
-    pub fn load_csg(&mut self, asset_id: u64, csg: csg::object::Object) {
+    pub fn load_csg(&mut self, asset_id: u64, csg: csg::CSG) {
         let asset = CsgObjectAsset::new(&self.state.device, csg);
         self.assets.load(asset_id, asset);
     }

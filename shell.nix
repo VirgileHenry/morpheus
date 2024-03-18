@@ -16,8 +16,8 @@ pkgs.mkShell {
     # pkgs.vulkan-tools
     # pkgs.vulkan-validation-layers
   ];
-  LD_LIBRARY_PATH = "${pkgs.libxkbcommon}/lib:${pkgs.libGL}/lib:${pkgs.wayland}/lib:${pkgs.vulkan-headers}/lib:${pkgs.vulkan-loader}/lib:${pkgs.vulkan-tools}/lib:${pkgs.vulkan-validation-layers}/lib";
-  RUST_BACKTRACE=0;
+  LD_LIBRARY_PATH="${pkgs.libxkbcommon}/lib:${pkgs.libGL}/lib:${pkgs.wayland}/lib";
+  RUST_BACKTRACE=1;
 
   # this will activate nvidia gpu that is using optimus prime.
   # this requires the vulkan thingies

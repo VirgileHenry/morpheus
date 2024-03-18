@@ -24,21 +24,17 @@ fn main() {
 
     renderer.load_csg(
         0,
-        csg::object::Object::Operation(
-            csg::operations::Op::Union(csg::operations::union::Union::new(vec![
-                csg::object::Object::Primitive(
-                    csg::primitives::Primitive::Cube(
-                        csg::primitives::cube::Cube::origin().scaled(glam::vec3(0.4, 0.2, 0.4)).at(glam::vec3(0.0, -0.2, 0.0))
-                    )
-                ),
-                csg::object::Object::Primitive(
-                    csg::primitives::Primitive::Sphere(
-                        csg::primitives::sphere::Sphere::centered(0.3).at(glam::vec3(0.0, 0.2, 0.0))
-                    )
-                ),
-            ]))
+        csg::csg!(
+            csg::BinOp::Union => {
+                csg::Primitive::sphere(0.3)
+            } {
+                csg::Primitive::sphere(0.3).at(glam::Vec3::new(0.0, 0.2, 0.0))
+            }
         )
     );
+
+    println!("{}", csg::node::CsgNode::BinOp(csg::BinOp::Union).id());
+
     renderer.create_obj(Transform::origin().rotated(glam::Quat::from_axis_angle(glam::Vec3::Y, 0.3)), 0);
 
     // ControlFlow::Wait pauses the event loop if no events are available to process.

@@ -8,12 +8,12 @@ use self::csg_buffer::CsgBuffer;
 
 pub struct CsgObjectAsset {
     buffer: CsgBuffer,
-    csg: csg::object::Object,
+    csg: csg::CSG,
 }
 
 impl CsgObjectAsset {
 
-    pub fn new(device: &wgpu::Device, csg: csg::object::Object) -> CsgObjectAsset {
+    pub fn new(device: &wgpu::Device, csg: csg::CSG) -> CsgObjectAsset {
         let buffer = CsgBuffer::new(device, &csg);
 
         CsgObjectAsset {
