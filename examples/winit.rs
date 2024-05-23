@@ -25,15 +25,13 @@ fn main() {
     renderer.load_csg(
         0,
         csg::csg!(
-            csg::BinOp::Union => {
+            csg::BinOp::Inter => {
                 csg::Primitive::sphere(0.3)
             } {
                 csg::Primitive::sphere(0.3).at(glam::Vec3::new(0.0, 0.2, 0.0))
             }
         )
     );
-
-    println!("{}", csg::node::CsgNode::BinOp(csg::BinOp::Union).id());
 
     renderer.create_obj(Transform::origin().rotated(glam::Quat::from_axis_angle(glam::Vec3::Y, 0.3)), 0);
 

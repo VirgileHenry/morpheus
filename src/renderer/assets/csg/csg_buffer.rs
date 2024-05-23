@@ -71,7 +71,7 @@ impl CsgBuffer {
             buffer.extend_from_slice(&buffered_node);
         }
 
-                if self.buffer_size >= csg.node_count() {
+        if self.buffer_size >= csg.node_count() {
             // need to reallocate the csg buffer
             let buffer_init = wgpu::util::BufferInitDescriptor {
                 label: Some("CSG Object data buffer"),

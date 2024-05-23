@@ -172,6 +172,18 @@ fn scene_sdf(at: vec3<f32>) -> f32 {
                 sdf_stack[stack_ptr - 2u] = min(sdf1, sdf2);
                 stack_ptr -= 1u; // pop 2 push 1
             }
+            case 4u: { // id 4 is inter (max), from the two values on the stack
+                let sdf1: f32 = sdf_stack[stack_ptr - 2u];
+                let sdf2: f32 = sdf_stack[stack_ptr - 1u];
+                sdf_stack[stack_ptr - 2u] = max(sdf1, sdf2);
+                stack_ptr -= 1u; // pop 2 push 1
+            }
+            case 5u: { // id 5 is diff (sub), from the two values on the stack
+                let sdf1: f32 = sdf_stack[stack_ptr - 2u];
+                let sdf2: f32 = sdf_stack[stack_ptr - 1u];
+                sdf_stack[stack_ptr - 2u] = max(-sdf1, sdf2);
+                stack_ptr -= 1u; // pop 2 push 1
+            }
 
             default: { return 0.; } // csg obj not supported, stop
         }
@@ -186,17 +198,16 @@ fn scene_normal(at: vec3<f32>) -> vec3<f32> {
     // mmmh, not a fan of calculating the sdf 4 times
     // another solution is to come across exact normal for every sdf node,
     // and use another stack to compute it
-
-    // this comes from inigo quilez articles, and he said he does it 
-    // https://iquilezles.org/articles/normalsSDF/
     
     // small enough for graphic precision, yet big enough to avoid noise artifacts
     let h: f32 = 0.00001;
     let k: vec2<f32> = vec2(1.0, -1.0);
-    let normal: vec3<f32> = normalize( k.xyy * scene_sdf( at + k.xyy * h ) + 
-                                       k.yyx * scene_sdf( at + k.yyx * h ) + 
-                                       k.yxy * scene_sdf( at + k.yxy * h ) + 
-                                       k.xxx * scene_sdf( at + k.xxx * h ) );
+    let normal: vec3<f32> = normalize(
+        k.xyy * scene_sdf( at + k.xyy * h ) + 
+        k.yyx * scene_sdf( at + k.yyx * h ) + 
+        k.yxy * scene_sdf( at + k.yxy * h ) + 
+        k.xxx * scene_sdf( at + k.xxx * h )
+    );
     
     // the normal is in cam view space, put it back in world space?
     let model_rot = mat3x3(model.transform[0].xyz, model.transform[1].xyz, model.transform[2].xyz);
@@ -208,6 +219,7 @@ fn scene_normal(at: vec3<f32>) -> vec3<f32> {
 
 // all objects sdf
 
+// primitives
 
 fn sphere_sdf(at: vec3<f32>, csg_index: u32) -> f32 {
     // we are reading this primitive, so increase the index
@@ -229,6 +241,7 @@ fn cube_sdf(at: vec3<f32>, csg_index: u32) -> f32 {
 }
 
 // utils
+
 fn smin(a: f32, b: f32, k: f32) -> f32 {
     let h: f32 = clamp(0.5 + 0.5*(a-b)/k, 0.0, 1.0);
     return mix(a, b, h) - k*h*(1.0-h);
